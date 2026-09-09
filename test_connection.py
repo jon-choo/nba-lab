@@ -1,7 +1,7 @@
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import playercareerstats
 
-# Find a player by name — let's use LeBron James as a test
+# Find a player by name 
 player_list = players.find_players_by_full_name("LeBron James")
 print(player_list)
 

@@ -25,12 +25,12 @@ def calculate_stat(df, zone=None, action_contains=None):
     return attempts, makes, fg_pct
 
 
-# Test it — same result as before, but now reusable
+# Test 
 lebron_shots = get_player_shots("LeBron James", "2022-23")
 
 attempts, makes, pct = calculate_stat(lebron_shots, zone='Mid-Range', action_contains='Pull-Up|Pullup')
 print(f"LeBron Midrange Pull-Ups: {attempts} attempts, {makes} makes, {pct:.1%}")
 
-# Now try a completely different combo, zero extra code needed
+# Test
 attempts2, makes2, pct2 = calculate_stat(lebron_shots, zone='Restricted Area')
 print(f"LeBron Restricted Area: {attempts2} attempts, {makes2} makes, {pct2:.1%}")
