@@ -2,4 +2,4 @@ venv/
 __pycache__/
 *.pyc
 .env
-nba_lab.db
+data/nba_lab.db

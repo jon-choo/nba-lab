@@ -1,5 +1,5 @@
 # formula_parser.py
-from stats_engine import get_player_shots, calculate_stat
+from src.stats_engine import get_player_shots, calculate_stat
 
 # "stat keywords" and what they map to
 STAT_DEFINITIONS = {

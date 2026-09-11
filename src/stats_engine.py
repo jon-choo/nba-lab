@@ -1,7 +1,7 @@
 import sqlite3
 import pandas as pd
 
-def get_player_shots(player_name, season, db_path='nba_lab.db'):
+def get_player_shots(player_name, season, db_path='../data/nba_lab.db'):
     """Pull a player's shots from the local database (not the API)."""
     conn = sqlite3.connect(db_path)
     query = "SELECT * FROM shots WHERE PLAYER_NAME_LABEL = ? AND SEASON = ?"

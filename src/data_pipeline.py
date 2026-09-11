@@ -3,7 +3,7 @@ import pandas as pd
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import shotchartdetail
 
-def get_and_save_shots(player_name, season, db_path='nba_lab.db'):
+def get_and_save_shots(player_name, season, db_path='../data/nba_lab.db'):
     # Look up player
     player_list = players.find_players_by_full_name(player_name)
     if not player_list:
