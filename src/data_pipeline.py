@@ -31,5 +31,5 @@ def get_and_save_shots(player_name, season, db_path='../data/nba_lab.db'):
 
     print(f"Saved {len(df)} shots for {player_name} ({season}) to {db_path}")
 
-# Test it
-get_and_save_shots("LeBron James", "2022-23")
+if __name__ == "__main__":
+    get_and_save_shots("LeBron James", "2022-23")
