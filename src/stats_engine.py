@@ -32,7 +32,10 @@ def calculate_stat(df, zone=None, action_contains=None):
     filtered = df.copy()
 
     if zone:
-        filtered = filtered[filtered['SHOT_ZONE_BASIC'] == zone]
+        if isinstance(zone, (list, tuple, set)):
+            filtered = filtered[filtered['SHOT_ZONE_BASIC'].isin(zone)]
+        else:
+            filtered = filtered[filtered['SHOT_ZONE_BASIC'] == zone]
 
     if action_contains:
         filtered = filtered[filtered['ACTION_TYPE'].str.contains(action_contains, case=False, na=False)]
