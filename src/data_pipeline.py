@@ -1,9 +1,14 @@
 import sqlite3
+from pathlib import Path
+
 import pandas as pd
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import shotchartdetail
 
-def get_and_save_shots(player_name, season, db_path='../data/nba_lab.db'):
+DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "nba_lab.db"
+
+
+def get_and_save_shots(player_name, season, db_path=DEFAULT_DB_PATH):
     # Look up player
     player_list = players.find_players_by_full_name(player_name)
     if not player_list:

@@ -1,9 +1,13 @@
 import sqlite3
+from pathlib import Path
+
 import pandas as pd
 from data_pipeline import get_and_save_shots
 
+DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "nba_lab.db"
 
-def get_player_shots(player_name, season, db_path='../data/nba_lab.db'):
+
+def get_player_shots(player_name, season, db_path=DEFAULT_DB_PATH):
     """
     Check the database first. If the player/season isn't there yet,
     fetch it live from the API, save it, then return it.
@@ -34,8 +38,8 @@ def calculate_stat(df, zone=None, action_contains=None):
         filtered = filtered[filtered['ACTION_TYPE'].str.contains(action_contains, case=False, na=False)]
 
     attempts = len(filtered)
-    makes = filtered['SHOT_MADE_FLAG'].sum()
-    fg_pct = makes / attempts if attempts > 0 else 0
+    makes = int(filtered['SHOT_MADE_FLAG'].sum())
+    fg_pct = makes / attempts if attempts > 0 else 0.0
 
     return attempts, makes, fg_pct
 

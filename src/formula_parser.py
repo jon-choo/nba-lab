@@ -34,26 +34,26 @@ def evaluate_formula(player_name, season, formula_string):
             working_formula = working_formula.replace(keyword, str(pct))
 
     # Safety check: warn about any leftover unrecognized words
+    errors = []
     leftover_words = re.findall(r'[A-Za-z_]+', working_formula)
     if leftover_words:
-        print(f"Warning: unrecognized terms in formula: {leftover_words}")
+        errors.append(f"Unrecognized terms in formula: {leftover_words}")
+        return None, breakdown, errors
 
     # Safely evaluate the resulting math expression
     aeval = Interpreter()
     result = aeval(working_formula)
 
     if aeval.error:
-        print("Error evaluating formula:")
-        for err in aeval.error:
-            print(f"  {err.get_error()}")
-        return None, breakdown
+        errors.extend(err.get_error()[1] for err in aeval.error)
+        return None, breakdown, errors
 
-    return result, breakdown
+    return result, breakdown, errors
 
 
 if __name__ == "__main__":
     # Test 1: original simple addition
-    result, breakdown = evaluate_formula(
+    result, breakdown, errors = evaluate_formula(
         "LeBron James", "2022-23",
         "MidRange_PullUp_PCT + RestrictedArea_PCT"
     )
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         print(f"  {k}: {v['value']:.1%} ({v['makes']}/{v['attempts']})")
 
     # Test 2: weighted formula with subtraction
-    result2, breakdown2 = evaluate_formula(
+    result2, breakdown2, errors2 = evaluate_formula(
         "LeBron James", "2022-23",
         "0.6 * MidRange_PullUp_PCT - 0.2 * StepBack_PCT + RestrictedArea_PCT"
     )
