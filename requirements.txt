@@ -1,3 +1,5 @@
 nba_api==1.10.2
 pandas==2.3.3
 asteval==1.0.6
+fastapi==0.128.8
+uvicorn==0.39.0
