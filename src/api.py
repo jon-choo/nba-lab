@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from nba_api.stats.static import players as players_static
 from pydantic import BaseModel
 
@@ -77,3 +80,10 @@ def formula_evaluate(req: FormulaRequest):
         raise HTTPException(status_code=400, detail=errors)
 
     return {"result": result, "breakdown": breakdown}
+
+
+# Serve the built React app (run `npm run build` in frontend/ first)
+FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+if FRONTEND_DIST.exists():
+    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
