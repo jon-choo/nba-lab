@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List, Literal
 
 import requests
 from fastapi import FastAPI, HTTPException
@@ -7,7 +8,13 @@ from fastapi.staticfiles import StaticFiles
 from nba_api.stats.static import players as players_static
 from pydantic import BaseModel
 
-from formula_parser import STAT_DEFINITIONS, evaluate_formula
+from formula_parser import (
+    SHOT_TYPES,
+    STAT_DEFINITIONS,
+    ZONES,
+    build_custom_definitions,
+    evaluate_formula,
+)
 from stats_engine import get_player_shots
 
 app = FastAPI(title="NBA Lab API")
@@ -60,6 +67,11 @@ def stat_definitions():
     return sorted(STAT_DEFINITIONS.keys())
 
 
+@app.get("/api/stats/options")
+def stat_options():
+    return {"zones": ZONES, "shot_types": list(SHOT_TYPES.keys())}
+
+
 @app.get("/api/shots")
 def shots(player: str, season: str):
     try:
@@ -73,16 +85,32 @@ def shots(player: str, season: str):
     return df.to_dict(orient="records")
 
 
+class CustomStat(BaseModel):
+    name: str
+    zones: List[str] = []
+    shot_types: List[str] = []
+    shot_match: Literal["any", "all"] = "any"
+
+
 class FormulaRequest(BaseModel):
     player: str
     season: str
     formula: str
+    custom_stats: List[CustomStat] = []
 
 
 @app.post("/api/formula/evaluate")
 def formula_evaluate(req: FormulaRequest):
+    custom_definitions, custom_errors = build_custom_definitions(
+        [stat.model_dump() for stat in req.custom_stats]
+    )
+    if custom_errors:
+        raise HTTPException(status_code=400, detail=custom_errors)
+
     try:
-        result, breakdown, errors = evaluate_formula(req.player, req.season, req.formula)
+        result, breakdown, errors = evaluate_formula(
+            req.player, req.season, req.formula, custom_definitions
+        )
     except Exception as exc:
         raise data_error(exc)
 

@@ -6,7 +6,9 @@ async function request(path, options) {
 
   if (!res.ok) {
     const detail = data?.detail
-    const message = Array.isArray(detail) ? detail.join(', ') : detail
+    const message = Array.isArray(detail)
+      ? detail.map((d) => (typeof d === 'string' ? d : d.msg)).join(', ')
+      : detail
     throw new Error(message || `Request failed (${res.status})`)
   }
 
@@ -21,10 +23,14 @@ export function getStatDefinitions() {
   return request('/api/stats/definitions')
 }
 
-export function evaluateFormula(player, season, formula) {
+export function getStatOptions() {
+  return request('/api/stats/options')
+}
+
+export function evaluateFormula(player, season, formula, customStats = []) {
   return request('/api/formula/evaluate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ player, season, formula }),
+    body: JSON.stringify({ player, season, formula, custom_stats: customStats }),
   })
 }

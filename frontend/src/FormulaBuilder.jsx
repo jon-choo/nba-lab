@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { evaluateFormula, getStatDefinitions, searchPlayers } from './api'
+import CustomStatForm from './CustomStatForm'
 
 const SEASONS = Array.from({ length: 26 }, (_, i) => {
   const start = 2025 - i
@@ -12,6 +13,8 @@ function FormulaBuilder() {
   const [player, setPlayer] = useState(null)
   const [season, setSeason] = useState(SEASONS[0])
   const [stats, setStats] = useState([])
+  const [customStats, setCustomStats] = useState([])
+  const [showCustomForm, setShowCustomForm] = useState(false)
   const [formula, setFormula] = useState('')
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
@@ -67,7 +70,7 @@ function FormulaBuilder() {
     setResult(null)
     setLoading(true)
     try {
-      const data = await evaluateFormula(player.full_name, season, formula)
+      const data = await evaluateFormula(player.full_name, season, formula, customStats)
       setResult(data)
     } catch (err) {
       setError(err.message)
@@ -144,7 +147,46 @@ function FormulaBuilder() {
               {name}
             </button>
           ))}
+          {customStats.map((s) => (
+            <span
+              key={s.name}
+              className="inline-flex items-center text-xs font-mono rounded-full border border-orange-500 overflow-hidden"
+            >
+              <button
+                type="button"
+                onClick={() => addStat(s.name)}
+                className="pl-3 pr-2 py-1 hover:bg-orange-500/10"
+              >
+                {s.name}
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomStats((list) => list.filter((x) => x.name !== s.name))}
+                aria-label={`Remove ${s.name}`}
+                className="px-2 py-1 text-orange-300 hover:bg-orange-500/20"
+              >
+                ×
+              </button>
+            </span>
+          ))}
         </div>
+
+        <button
+          type="button"
+          onClick={() => setShowCustomForm((v) => !v)}
+          className="mt-4 text-sm text-orange-400 hover:underline"
+        >
+          {showCustomForm ? 'Hide custom stat builder' : '+ Create your own stat'}
+        </button>
+
+        {showCustomForm && (
+          <div className="mt-3">
+            <CustomStatForm
+              takenNames={[...stats, ...customStats.map((s) => s.name)]}
+              onAdd={(stat) => setCustomStats((list) => [...list, stat])}
+            />
+          </div>
+        )}
       </div>
 
       <button

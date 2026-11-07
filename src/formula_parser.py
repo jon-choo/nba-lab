@@ -25,22 +25,91 @@ STAT_DEFINITIONS = {
 }
 
 
-def evaluate_formula(player_name, season, formula_string):
+# Options for user-built stats (the pickers only send these names, never raw patterns)
+ZONES = [
+    'Restricted Area',
+    'In The Paint (Non-RA)',
+    'Mid-Range',
+    'Left Corner 3',
+    'Right Corner 3',
+    'Above the Break 3',
+]
+
+SHOT_TYPES = {
+    'Pull-up':   'Pull-Up|Pullup',
+    'Step back': 'Step Back',
+    'Fadeaway':  'Fadeaway',
+    'Turnaround': 'Turnaround',
+    'Floater':   'Floating',
+    'Hook shot': 'Hook',
+    'Layup':     'Layup',
+    'Dunk':      'Dunk',
+    'Driving':   'Driving',
+    'Running':   'Running',
+    'Cutting':   'Cutting',
+    'Alley-oop': 'Alley Oop',
+    'Jump shot': 'Jump',
+    'Bank shot': 'Bank',
+}
+
+MAX_CUSTOM_STATS = 20
+NAME_PATTERN = re.compile(r'^[A-Za-z_][A-Za-z0-9_]{0,39}$')
+
+
+def build_custom_definitions(custom_stats):
+    """Check user-built stats and turn them into the same format as STAT_DEFINITIONS."""
+    definitions = {}
+    errors = []
+
+    if len(custom_stats) > MAX_CUSTOM_STATS:
+        errors.append(f"Too many custom stats (max {MAX_CUSTOM_STATS})")
+        return definitions, errors
+
+    for stat in custom_stats:
+        name = stat['name']
+        zones = stat['zones']
+        shot_types = stat['shot_types']
+
+        if not NAME_PATTERN.match(name):
+            errors.append(f"Invalid stat name '{name}' (use letters, numbers and underscores)")
+        elif name in STAT_DEFINITIONS or name in definitions:
+            errors.append(f"A stat named '{name}' already exists")
+        elif not zones and not shot_types:
+            errors.append(f"'{name}' needs at least one zone or shot type")
+        elif any(z not in ZONES for z in zones) or any(t not in SHOT_TYPES for t in shot_types):
+            errors.append(f"'{name}' has an unknown zone or shot type")
+        else:
+            patterns = [SHOT_TYPES[t] for t in shot_types]
+            if not patterns:
+                action = None
+            elif stat['shot_match'] == 'all':
+                action = ''.join(f'(?=.*(?:{p}))' for p in patterns)
+            else:
+                action = '|'.join(f'(?:{p})' for p in patterns)
+            definitions[name] = {'zone': zones or None, 'action_contains': action}
+
+    return definitions, errors
+
+
+def evaluate_formula(player_name, season, formula_string, custom_definitions=None):
     df = get_player_shots(player_name, season)
 
+    all_definitions = {**STAT_DEFINITIONS, **(custom_definitions or {})}
+
     # Find all stat keywords used in the formula (longest names matched first to avoid partial overlaps)
-    sorted_keys = sorted(STAT_DEFINITIONS.keys(), key=len, reverse=True)
+    sorted_keys = sorted(all_definitions.keys(), key=len, reverse=True)
 
     breakdown = {}
     working_formula = formula_string
 
     for keyword in sorted_keys:
-        if keyword in working_formula:
-            params = STAT_DEFINITIONS[keyword]
+        pattern = rf'\b{re.escape(keyword)}\b'
+        if re.search(pattern, working_formula):
+            params = all_definitions[keyword]
             attempts, makes, pct = calculate_stat(df, **params)
             breakdown[keyword] = {'value': pct, 'attempts': attempts, 'makes': makes}
             # Replace the keyword with its numeric value in the formula string
-            working_formula = working_formula.replace(keyword, str(pct))
+            working_formula = re.sub(pattern, str(pct), working_formula)
 
     # Safety check: warn about any leftover unrecognized words
     errors = []
