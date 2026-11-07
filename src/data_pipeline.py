@@ -21,7 +21,8 @@ def get_and_save_shots(player_name, season, db_path=DEFAULT_DB_PATH):
         player_id=player_id,
         team_id=0,
         season_nullable=season,
-        context_measure_simple='FGA'
+        context_measure_simple='FGA',
+        timeout=15
     )
     df = shots.get_data_frames()[0]
 

@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -10,6 +11,15 @@ from formula_parser import STAT_DEFINITIONS, evaluate_formula
 from stats_engine import get_player_shots
 
 app = FastAPI(title="NBA Lab API")
+
+
+def data_error(exc):
+    if isinstance(exc, requests.exceptions.RequestException):
+        return HTTPException(
+            status_code=503,
+            detail="Can't reach the NBA stats server right now. Players already saved in the database still work.",
+        )
+    return HTTPException(status_code=502, detail=f"Failed to load data: {exc}")
 
 # Dev-only: lets a frontend running on a different port call this API.
 app.add_middleware(
@@ -55,7 +65,7 @@ def shots(player: str, season: str):
     try:
         df = get_player_shots(player, season)
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Failed to fetch shot data: {exc}")
+        raise data_error(exc)
 
     if df.empty:
         raise HTTPException(status_code=404, detail=f"No shot data for {player} in {season}")
@@ -74,7 +84,7 @@ def formula_evaluate(req: FormulaRequest):
     try:
         result, breakdown, errors = evaluate_formula(req.player, req.season, req.formula)
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Failed to evaluate formula: {exc}")
+        raise data_error(exc)
 
     if errors:
         raise HTTPException(status_code=400, detail=errors)
